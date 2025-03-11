@@ -13,7 +13,7 @@ const employeeServices = require('./routes/employee-routes')
 const mapper = '/api/v1'
 
 //init app
-const app = express()
+const app = express();
 
 app.use(cors());
 

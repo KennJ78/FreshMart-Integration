@@ -1,121 +1,222 @@
-const API_BASE_URL = 'http://localhost:3000/api/v1/employee';
-let employeeModal;
+const employeeTableBody = document.getElementById('employeeList');
+const successAlert = document.getElementById('successAlert');
+const errorAlert = document.getElementById('errorAlert');
 
-document.addEventListener('DOMContentLoaded', function() {
-    employeeModal = new bootstrap.Modal(document.getElementById('employeeModal'));
-    initializeEventListeners();
-    fetchEmployees();
-});
+const API_URL = "http://localhost:3000/api/v1/employee"; // Update with your actual API URL
 
-function initializeEventListeners() {
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.querySelector('.sidebar').classList.toggle('active');
-        document.querySelector('.main-content').classList.toggle('active');
-    });
+// Fetch all employees
+const fetchEmployees = async () => {
+    try {
+        const response = await fetch(`${API_URL}/all`);
+        const result = await response.json();
 
-    document.getElementById('saveEmployee').addEventListener('click', handleSaveEmployee);
-}
+        console.log("API Response:", result); // Debugging
 
-function showAlert(isSuccess, message) {
-    const successAlert = document.getElementById('successAlert');
-    const errorAlert = document.getElementById('errorAlert');
+        // Ensure the response contains an array
+        if (!Array.isArray(result.data)) {
+            throw new Error("Invalid API response format.");
+        }
+
+        employeeTableBody.innerHTML = ''; // Clear table before adding new data
+        result.data.forEach((employee, index) => {
+            employeeTableBody.appendChild(createEmployeeRow(employee, index));
+        });
+    } catch (error) {
+        console.error("Error fetching employees:", error);
+        showAlert(false, "Failed to fetch employees.");
+    }
+};
+
+// Create a row for each employee
+const createEmployeeRow = (employee, index) => {
     
+
+    const employeeId = employee.id || employee.ID || employee._id; 
+
+    if (!employeeId) {
+        console.error("Error: Employee ID is missing", employee);
+        return; 
+    }
+    const tr = document.createElement('tr');
+
+    tr.innerHTML = `
+    
+        <td>${employee.Full_Name}</td>
+        <td>${employee.Date_of_Birth}</td>
+        <td>${employee.Address}</td>
+        <td>${employee.Contact_Number}</td>
+        <td>${employee.Emergency_Contact_Number}</td>
+        <td>
+         <button class="btn btn-primary btn-sm" onclick="showUpdateModal(${employee.id}, '${employee.Full_Name}', '${employee.Date_of_Birth}', '${employee.Address}', '${employee.Contact_Number}', '${employee.Emergency_Contact_Number}')">
+                <i class="bi bi-pencil-square"></i> Update
+            </button>
+           <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${employeeId}')">
+                <i class="bi bi-trash"></i> Delete
+            </button>
+        </td>
+    `;
+
+    return tr;
+};
+
+
+// Show success or error alerts
+const showAlert = (isSuccess, message) => {
     if (isSuccess) {
         successAlert.textContent = message;
         successAlert.style.display = 'block';
-        setTimeout(() => successAlert.style.display = 'none', 3000);
+        setTimeout(() => (successAlert.style.display = 'none'), 3000);
     } else {
         errorAlert.textContent = message;
         errorAlert.style.display = 'block';
-        setTimeout(() => errorAlert.style.display = 'none', 3000);
+        setTimeout(() => (errorAlert.style.display = 'none'), 3000);
     }
-}
+};
 
-async function fetchEmployees() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/getemp`);
-        if (!response.ok) throw new Error('Failed to fetch employees');
-        const employees = await response.json();
-        const tbody = document.getElementById('employeeList');
-        tbody.innerHTML = '';
-        employees.forEach(employee => addEmployeeToTable(employee));
-    } catch (error) {
-        showAlert(false, 'Failed to load employees: ' + error.message);
-    }
-}
+// Add new employee
+document.getElementById('saveEmployee').addEventListener('click', async () => {
+    const name = document.getElementById('name').value.trim();
+    const birthDate = document.getElementById('birthDate').value;
+    const address = document.getElementById('address').value.trim();
+    const contactNumber = document.getElementById('contactNumber').value.trim();
+    const emergencyContactNumber = document.getElementById('emergencyContactNumber').value.trim();
 
-async function handleSaveEmployee() {
-    const form = document.getElementById('employeeForm');
-    
-    if (!form.checkValidity()) {
-        form.reportValidity();
+    if (!name || !birthDate || !address || !contactNumber || !emergencyContactNumber) {
+        showAlert(false, "Please fill in all fields.");
         return;
     }
 
-    const employee = {
-        name: document.getElementById('name').value,
-        birthDate: document.getElementById('birthDate').value,
-        address: document.getElementById('address').value,
-        contactNumber: document.getElementById('contactNumber').value,
-        emergencyContactNumber: document.getElementById('emergencyContactNumber').value
+    // Convert birthDate to YYYY-MM-DD format
+    const formattedBirthDate = new Date(birthDate).toISOString().split('T')[0];
+
+    // Ensure field names match API expectations
+    const newEmployee = {
+        
+        FULL_Name: name,
+        Date_of_Birth: formattedBirthDate,
+        Address: address,
+        Contact_Number: contactNumber,
+        Emergency_Contact_Number: emergencyContactNumber
     };
 
     try {
-        const response = await fetch(`${API_BASE_URL}/create`, {
+        const response = await fetch(`${API_URL}/create`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(employee)
+            body: JSON.stringify(newEmployee)
         });
 
-        if (!response.ok) throw new Error('Failed to add employee');
-        
-        showAlert(true, 'Employee added successfully!');
-        form.reset();
-        employeeModal.hide();
-        fetchEmployees();
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(true, "Employee added successfully!");
+            document.getElementById('employeeForm').reset();
+            fetchEmployees(); // Refresh table
+            bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide(); // Hide modal
+        } else {
+            console.error("Server Response:", result);
+            throw new Error(result.message || "Failed to add employee.");
+        }
     } catch (error) {
-        showAlert(false, 'Failed to add employee: ' + error.message);
+        console.error("Error adding employee:", error);
+        showAlert(false, error.message);
     }
-}
+});
 
-function addEmployeeToTable(employee) {
-    const tbody = document.getElementById('employeeList');
-    const row = document.createElement('tr');
-    
-    row.innerHTML = `
-        <td>${employee.name}</td>
-        <td>${new Date(employee.birthDate).toLocaleDateString()}</td>
-        <td>${employee.address}</td>
-        <td>${employee.contactNumber}</td>
-        <td>${employee.emergencyContactNumber}</td>
-        <td>
-            <button class="btn btn-sm btn-warning me-2" onclick="editEmployee('${employee.id}')">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${employee.id}')">Delete</button>
-        </td>
-    `;
-    
-    tbody.appendChild(row);
-}
+// Show Update Modal and Populate Fields
+const showUpdateModal = (id, name, birthDate, address, contactNumber, emergencyContactNumber) => {
+    document.getElementById('updateId').value = id;
+    document.getElementById('updateName').value = name;
+    document.getElementById('updateBirthDate').value = birthDate;
+    document.getElementById('updateAddress').value = address;
+    document.getElementById('updateContactNumber').value = contactNumber;
+    document.getElementById('updateEmergencyContactNumber').value = emergencyContactNumber;
 
-async function deleteEmployee(id) {
-    if (!confirm('Are you sure you want to delete this employee?')) return;
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/delete/${id}`, { method: 'DELETE' });
-
-        if (!response.ok) throw new Error('Failed to delete employee');
-        
-        showAlert(true, 'Employee deleted successfully!');
-        fetchEmployees();
-    } catch (error) {
-        showAlert(false, 'Failed to delete employee: ' + error.message);
-    }
-}
-
-window.editEmployee = function(id) {
-    console.log('Edit employee:', id);
+    // Show the Bootstrap modal
+    new bootstrap.Modal(document.getElementById('updateModal')).show();
 };
 
-window.deleteEmployee = deleteEmployee;
+// Update Employee
+document.getElementById('updateEmployee').addEventListener('click', async () => {
+    const id = document.getElementById('updateId').value;
+    const name = document.getElementById('updateName').value.trim();
+    const birthDate = document.getElementById('updateBirthDate').value;
+    const address = document.getElementById('updateAddress').value.trim();
+    const contactNumber = document.getElementById('updateContactNumber').value.trim();
+    const emergencyContactNumber = document.getElementById('updateEmergencyContactNumber').value.trim();
+
+    if (!id || !name || !birthDate || !address || !contactNumber || !emergencyContactNumber) {
+        showAlert(false, "Please fill in all fields.");
+        return;
+    }
+
+    const formattedBirthDate = new Date(birthDate).toISOString().split('T')[0];
+
+    const updatedEmployee = {
+        Full_Name: name,
+        Date_of_Birth: formattedBirthDate,
+        Address: address,
+        Contact_Number: contactNumber,
+        Emergency_Contact_Number: emergencyContactNumber
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/update/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedEmployee)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(true, "Employee updated successfully!");
+            fetchEmployees(); // Refresh table
+            bootstrap.Modal.getInstance(document.getElementById('updateModal')).hide(); // Hide modal
+        } else {
+            throw new Error(result.message || "Failed to update employee.");
+        }
+    } catch (error) {
+        console.error("Error updating employee:", error);
+        showAlert(false, error.message);
+    }
+});
+
+// Delete an employee
+const deleteEmployee = async (id) => {
+    if (!id) {
+        showAlert(false, "Error: Employee ID is missing.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to delete this employee?")) return;
+
+    try {
+        const response = await fetch(`${API_URL}/delete/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(true, "Employee deleted successfully!");
+            fetchEmployees(); // Refresh table
+        } else {
+            throw new Error(result.message || "Failed to delete employee.");
+        }
+    } catch (error) {
+        console.error("Error deleting employee:", error);
+        showAlert(false, error.message);
+    }
+};
+
+
+// Fetch employees on page load
+fetchEmployees();
