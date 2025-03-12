@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Fixed Navbar -->
+    <nav class="navbar">
+        <div class="navbar-title">Inventory Management</div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">Inventory</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="form-container">
+            <h3>Add Product</h3>
+            <input type="text" id="name" placeholder="Product Name">
+            <input type="text" id="description" placeholder="Description">
+            <input type="number" id="stock" placeholder="Stock">
+            <input type="number" id="price" placeholder="Price">
+            <button onclick="addProduct()">Add Product</button>
+        </div>
+
+        <div class="table-container">
+            <h3>Product List</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="products">
+                    <!-- Products will be dynamically loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="fetch.js"></script>
+</body>
+</html>

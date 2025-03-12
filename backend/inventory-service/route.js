@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const productServices = require('./routes/inventory-routes');
 
 const {
     createProduct,

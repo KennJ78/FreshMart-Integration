@@ -1,15 +1,19 @@
-const express = require('express')
-const router = express.Router()
+const express = require('express');
+const router = express.Router();
 
-//const requireAuth = require('../middleware/requireAuth')
 const {
-    addProduct,
-    fetchProducts
-} = require('../controllers/inventory-controller')
+    createProduct,
+    getAllProducts,
+    reduceStock
+} = require('../controllers');  // Ensure correct path
 
-//router.use(requireAuth)
+// Route for adding a product
+router.post('/add', createProduct);
 
-router.post('/new', addProduct)
-router.get('/all', fetchProducts)
+// Route for fetching all products
+router.get('/', getAllProducts);
 
-module.exports = router
+// Route for reducing stock
+router.patch('/edit/:product_name', reduceStock);
+
+module.exports = router;
