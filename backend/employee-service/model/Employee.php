@@ -65,12 +65,21 @@ class Employee
     // Update Employee
     public function updateEmployee($id, $employeeInput)
     {
-        $FULL_Name = mysqli_real_escape_string($this->conn, $employeeInput['FULL_Name']);
-        $Date_of_Birth = mysqli_real_escape_string($this->conn, $employeeInput['Date_of_Birth']);
-        $Address = mysqli_real_escape_string($this->conn, $employeeInput['Address']);
-        $Contact_Number = mysqli_real_escape_string($this->conn, $employeeInput['Contact_Number']);
-        $Emergency_Contact_Number = mysqli_real_escape_string($this->conn, $employeeInput['Emergency_Contact_Number']);
+        // Fetch current employee data
+        $currentEmployee = $this->getEmployeeById($id);
+        if ($currentEmployee['status'] !== 200) {
+            return ['status' => 404, 'message' => 'Employee not found'];
+        }
 
+        // Merge existing data with new input (preserve old values)
+        $existingData = $currentEmployee['data'];
+        $FULL_Name = isset($employeeInput['FULL_Name']) ? mysqli_real_escape_string($this->conn, $employeeInput['FULL_Name']) : $existingData['FULL_Name'];
+        $Date_of_Birth = isset($employeeInput['Date_of_Birth']) ? mysqli_real_escape_string($this->conn, $employeeInput['Date_of_Birth']) : $existingData['Date_of_Birth'];
+        $Address = isset($employeeInput['Address']) ? mysqli_real_escape_string($this->conn, $employeeInput['Address']) : $existingData['Address'];
+        $Contact_Number = isset($employeeInput['Contact_Number']) ? mysqli_real_escape_string($this->conn, $employeeInput['Contact_Number']) : $existingData['Contact_Number'];
+        $Emergency_Contact_Number = isset($employeeInput['Emergency_Contact_Number']) ? mysqli_real_escape_string($this->conn, $employeeInput['Emergency_Contact_Number']) : $existingData['Emergency_Contact_Number'];
+
+        // Update Query
         $query = "UPDATE employees SET 
                   FULL_Name = '$FULL_Name', 
                   Date_of_Birth = '$Date_of_Birth', 
@@ -85,6 +94,7 @@ class Employee
             return ['status' => 500, 'message' => 'Database Error: ' . mysqli_error($this->conn)];
         }
     }
+
 
     // Delete Employee
     public function deleteEmployee($id)

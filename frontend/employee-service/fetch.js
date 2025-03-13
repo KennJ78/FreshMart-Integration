@@ -126,17 +126,17 @@ document.getElementById('saveEmployee').addEventListener('click', async () => {
 });
 
 // Show Update Modal and Populate Fields
-const showUpdateModal = (id, name, birthDate, address, contactNumber, emergencyContactNumber) => {
+const showUpdateModal = (id, name = "", birthDate = "", address = "", contactNumber = "", emergencyContactNumber = "") => {
     document.getElementById('updateId').value = id;
-    document.getElementById('updateName').value = name;
-    document.getElementById('updateBirthDate').value = birthDate;
-    document.getElementById('updateAddress').value = address;
-    document.getElementById('updateContactNumber').value = contactNumber;
-    document.getElementById('updateEmergencyContactNumber').value = emergencyContactNumber;
+    document.getElementById('updateName').value = name || "";
+    document.getElementById('updateBirthDate').value = birthDate || "";
+    document.getElementById('updateAddress').value = address || "";
+    document.getElementById('updateContactNumber').value = contactNumber || "";
+    document.getElementById('updateEmergencyContactNumber').value = emergencyContactNumber || "";
 
-    // Show the Bootstrap modal
     new bootstrap.Modal(document.getElementById('updateModal')).show();
 };
+
 
 // Update Employee
 document.getElementById('updateEmployee').addEventListener('click', async () => {
@@ -155,7 +155,7 @@ document.getElementById('updateEmployee').addEventListener('click', async () => 
     const formattedBirthDate = new Date(birthDate).toISOString().split('T')[0];
 
     const updatedEmployee = {
-        Full_Name: name,
+        FULL_Name: name,  
         Date_of_Birth: formattedBirthDate,
         Address: address,
         Contact_Number: contactNumber,
@@ -176,7 +176,7 @@ document.getElementById('updateEmployee').addEventListener('click', async () => 
         if (response.ok) {
             showAlert(true, "Employee updated successfully!");
             fetchEmployees(); // Refresh table
-            bootstrap.Modal.getInstance(document.getElementById('updateModal')).hide(); // Hide modal
+            bootstrap.Modal.getInstance(document.getElementById('updateModal')).hide();
         } else {
             throw new Error(result.message || "Failed to update employee.");
         }
@@ -185,6 +185,7 @@ document.getElementById('updateEmployee').addEventListener('click', async () => 
         showAlert(false, error.message);
     }
 });
+
 
 // Delete an employee
 const deleteEmployee = async (id) => {
